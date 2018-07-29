@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+
+import sys
+from pathlib import Path
+
+import pycman
+
+
+CACHE_PATHS = [
+    '/home/simon/.cache/yay',
+    '/home/simon/.cache/pacaur',
+]
+
+
+def pkg_string(db, pkg_name):
+    pkg = db.get_pkg(pkg_name)
+    if pkg:
+        return f'{pkg.name}-{pkg.version}-{pkg.arch}'
+        
+
+def pkg_path(db, pkg_name):
+    pkg = db.get_pkg(pkg_name)
+    if not pkg:
+        print(
+            f'Error: could not find package "{pkg_name}"',
+            file=sys.stderr
+        )
+        return
+    pkg_string = f'{pkg.name}-{pkg.version}-{pkg.arch}'
+    for cache_path in CACHE_PATHS:
+        pkg_dir = Path(cache_path) / (pkg.base or pkg.name)
+        for fpath in pkg_dir.glob(f'{pkg_string}.pkg.*'):
+            return fpath
+
+
+def main():
+    alpm = pycman.config.init_with_config('/etc/pacman.conf')
+    localdb = alpm.get_localdb()
+    for line in sys.stdin:
+        pkg_name = line.strip()
+        if not pkg_name:
+            continue
+        path = pkg_path(localdb, pkg_name)
+        if path:
+            print(f'FOUND: {path.as_posix()}')
+        else:
+            print(f'MISSING: {pkg_name}')
+
+
+if __name__ == '__main__':
+    main()

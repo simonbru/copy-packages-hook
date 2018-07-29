@@ -1,0 +1,12 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = *
+
+[Action]
+Description = Copy local packages to sync folder
+When = PostTransaction
+Exec = /etc/pacman.d/hooks.bin/copy-packages
+Depends = pyalpm
+NeedsTargets
