@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -11,12 +13,12 @@ CACHE_PATHS = [
     '/home/simon/.cache/pacaur',
 ]
 
+DESTINATION = '/home/simon/Sync/Local/Paquets/'
 
-def pkg_string(db, pkg_name):
-    pkg = db.get_pkg(pkg_name)
-    if pkg:
-        return f'{pkg.name}-{pkg.version}-{pkg.arch}'
-        
+INCLUDE_PATTERNS = [
+
+]
+
 
 def pkg_path(db, pkg_name):
     pkg = db.get_pkg(pkg_name)
@@ -38,13 +40,14 @@ def main():
     localdb = alpm.get_localdb()
     for line in sys.stdin:
         pkg_name = line.strip()
-        if not pkg_name:
-            continue
-        path = pkg_path(localdb, pkg_name)
-        if path:
-            print(f'FOUND: {path.as_posix()}')
-        else:
-            print(f'MISSING: {pkg_name}')
+        if pkg_name and any(
+            re.search(pattern, pkg_name)
+            for pattern in INCLUDE_PATTERNS
+        ):
+            path = pkg_path(localdb, pkg_name)
+            if path:
+                print(f'Copying package: {pkg_name}')
+                shutil.copy(path, DESTINATION)
 
 
 if __name__ == '__main__':
