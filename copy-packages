@@ -47,7 +47,9 @@ def main():
             path = pkg_path(localdb, pkg_name)
             if path:
                 print(f'Copying package: {pkg_name}')
-                shutil.copy(path, DESTINATION)
+                # Avoid problematic characters
+                fname = path.name.replace(':', '__')
+                shutil.copy(path, Path(DESTINATION) / fname)
 
 
 if __name__ == '__main__':
