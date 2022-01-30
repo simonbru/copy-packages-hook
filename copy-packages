@@ -15,9 +15,19 @@ CACHE_PATHS = [
 
 DESTINATION = '/home/simon/Sync/Local/Paquets/'
 
-INCLUDE_PATTERNS = [
 
-]
+def get_include_rules():
+    rules_fpath = Path(DESTINATION) / "package-rules.txt"
+    rules_text = rules_fpath.read_text()
+
+    rules = []
+    for line in rules_text.split('\n'):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        rules.append(re.compile(line))
+
+    return rules
 
 
 def pkg_path(db, pkg_name):
@@ -38,12 +48,10 @@ def pkg_path(db, pkg_name):
 def main():
     alpm = pycman.config.init_with_config('/etc/pacman.conf')
     localdb = alpm.get_localdb()
+    rules = get_include_rules()
     for line in sys.stdin:
         pkg_name = line.strip()
-        if pkg_name and any(
-            re.search(pattern, pkg_name)
-            for pattern in INCLUDE_PATTERNS
-        ):
+        if pkg_name and any(rule.match(pkg_name) for rule in rules):
             path = pkg_path(localdb, pkg_name)
             if path:
                 print(f'Copying package: {pkg_name}')
